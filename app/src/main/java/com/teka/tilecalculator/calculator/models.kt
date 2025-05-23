@@ -5,8 +5,8 @@ enum class measurementUnits { inches, feet, meters }
 data class Tile(
     val length: Double,
     val width: Double,
-    val lengthUnit: String,
-    val widthUnit: String
+    val lengthUnit: measurementUnits,
+    val widthUnit: measurementUnits
 )
 
 data class Room(
