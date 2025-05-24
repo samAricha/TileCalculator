@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +16,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -33,20 +33,22 @@ fun TileCalculatorScreen() {
     val scrollState = rememberScrollState()
     val screenContext = LocalContext.current
 
+    var roomName by remember { mutableStateOf("") }
     var roomLength by remember { mutableStateOf("") }
     var roomWidth by remember { mutableStateOf("") }
-    var roomUnit by remember { mutableStateOf("m") }
+    var roomLengthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
+    var roomWidthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
 
     var tileLength by remember { mutableStateOf("") }
     var tileWidth by remember { mutableStateOf("") }
     var tileLengthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
     var tileWidthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
 
-    var tileList: List<Tile> by remember { mutableStateOf<List<Tile>>(emptyList()) }
+    var selectedTile by remember { mutableStateOf<Tile?>(null) }
+    var tileList: List<Tile> by remember { mutableStateOf<List<Tile>>(initTileList) }
     var roomList by remember { mutableStateOf<List<Room>>(emptyList()) }
-
     var wastagePercent by remember { mutableStateOf("10") }
-    var boxSize by remember { mutableStateOf("00") }
+    var boxSize by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<Int?>(null) }
 
     val scope = rememberCoroutineScope()
@@ -98,8 +100,27 @@ fun TileCalculatorScreen() {
                 }
             }
 
+            LazyRow {
+                items(tileList) { tile ->
+                    Text(text = "Item: ${tile.width} ${tile.widthUnit.shortRep} * ${tile.length} ${tile.lengthUnit.shortRep}")
+                }
+            }
+
             LazyColumn {
                 items(roomList) { room ->
+                    val roomLengthM =
+                        convertToMeters(room.length, room.lengthUnit.shortRep)
+                    val roomWidthM =
+                        convertToMeters(room.width, room.widthUnit.shortRep)
+                    val tileLengthM =
+                        convertToMeters(tileLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.shortRep)
+                    val tileWidthM =
+                        convertToMeters(tileWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.shortRep)
+                    val waste = wastagePercent.toIntOrNull() ?: 10
+
+
+
+
                     Text(text = "Item: ${room.name}")
                 }
             }
@@ -109,13 +130,13 @@ fun TileCalculatorScreen() {
                 onClick = {
                     // Convert everything to meters(standard) for calculation
                     val roomLengthM =
-                        convertToMeters(roomLength.toDoubleOrNull() ?: 0.0, roomUnit)
+                        convertToMeters(roomLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.shortRep)
                     val roomWidthM =
-                        convertToMeters(roomWidth.toDoubleOrNull() ?: 0.0, roomUnit)
+                        convertToMeters(roomWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.shortRep)
                     val tileLengthM =
-                        convertToMeters(tileLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.name)
+                        convertToMeters(tileLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.shortRep)
                     val tileWidthM =
-                        convertToMeters(tileWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.name)
+                        convertToMeters(tileWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.shortRep)
                     val waste = wastagePercent.toIntOrNull() ?: 10
 
                     result = calculateTiles(
@@ -163,7 +184,7 @@ fun TileCalculatorScreen() {
                             ?: 0.0)
                     if (roomArea > 0) {
                         Text(
-                            text = "Room area: ${String.format("%.1f", roomArea)} sq $roomUnit",
+                            text = "Room area: ${String.format("%.1f", roomArea)} sq ${measurementUnits.METERS.shortRep}",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -203,7 +224,9 @@ fun TileCalculatorScreen() {
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 5.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -311,7 +334,9 @@ fun TileCalculatorScreen() {
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 5.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -335,38 +360,43 @@ fun TileCalculatorScreen() {
                     }
 
                     // Room Size Section - no presets
-                    SizeInputCard(
-                        title = "Room Dimensions",
+                    RoomInputCard(
+                        roomName = roomName,
+                        selectedTile = selectedTile,
+                        onTileChange = { selectedTile = it },
+                        onRoomNameChange = { roomName = it },
                         lengthValue = roomLength,
                         onLengthChange = { roomLength = it },
                         widthValue = roomWidth,
                         onWidthChange = { roomWidth = it },
-                        unit = roomUnit,
-                        onUnitChange = { roomUnit = it },
-                        units = listOf("m", "ft", "in"),
-                        presets = tileList
+                        tileList = tileList,
+                        lengthUnit = roomLengthUnit,
+                        widthUnit = roomWidthUnit,
+                        onLengthUnitChange = { roomLengthUnit = it },
+                        onWidthUnitChange = { roomWidthUnit = it },
+
                     )
 
 
                     Button(
                         onClick = {
-                            if (tileLength.isEmpty() || tileWidth.isEmpty() || wastagePercent.isEmpty() || boxSize.isEmpty()) {
+                            if (roomLength.isEmpty() || roomWidth.isEmpty() || roomName.isEmpty() || selectedTile == null ) {
                                 Toast.makeText(screenContext, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
                             scope.launch {
-                                tileList = tileList + Tile(
-                                    length = tileLength.toDouble(),
-                                    width = tileWidth.toDouble(),
-                                    lengthUnit = tileLengthUnit,
-                                    widthUnit = tileWidthUnit,
-                                    wastePercent = wastagePercent.toInt(),
-                                    boxSize = boxSize.toInt()
+                                roomList = roomList + Room(
+                                    name = roomName,
+                                    length = roomLength.toDouble(),
+                                    width = roomWidth.toDouble(),
+                                    lengthUnit = roomLengthUnit,
+                                    widthUnit = roomWidthUnit,
+                                    tile = selectedTile!!
                                 )
-                                tileSheetState.hide()
+                                roomSheetState.hide()
                             }.invokeOnCompletion {
-                                if (!tileSheetState.isVisible) {
-                                    showTileBottomSheet = false
+                                if (!roomSheetState.isVisible) {
+                                    showRoomBottomSheet = false
                                 }
                             }
                         },
