@@ -31,13 +31,12 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TileInputCard(
-    title: String,
     lengthValue: String,
     onLengthChange: (String) -> Unit,
     widthValue: String,
     onWidthChange: (String) -> Unit,
-    lengthUnit: String,
-    widthUnit: String,
+    lengthUnit: measurementUnits,
+    widthUnit: measurementUnits,
     onLengthUnitChange: (measurementUnits) -> Unit,
     onWidthUnitChange: (measurementUnits) -> Unit,
 ) {
@@ -53,25 +52,13 @@ fun TileInputCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                TextField(
+                OutlinedTextField(
                     modifier = Modifier.weight(.6f),
                     value = lengthValue,
                     onValueChange = onLengthChange,
-                    label = { Text("Length ($lengthUnit)") },
+                    label = { Text("Length (${lengthUnit.shortRep})") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
                 )
@@ -85,7 +72,7 @@ fun TileInputCard(
                         onClick = { lengthUnitExpanded = true },
                         label = {
                             Text(
-                                lengthUnit,
+                                lengthUnit.unitName,
                                 style = MaterialTheme.typography.labelMedium
                             )
                         },
@@ -103,7 +90,7 @@ fun TileInputCard(
                     ) {
                         measurementUnits.entries.forEach { unitOption ->
                             DropdownMenuItem(
-                                text = { Text(unitOption.name) },
+                                text = { Text(unitOption.unitName) },
                                 onClick = {
                                     onLengthUnitChange(unitOption)
                                     lengthUnitExpanded = false
@@ -117,11 +104,11 @@ fun TileInputCard(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                TextField(
+                OutlinedTextField(
                     modifier = Modifier.weight(.6f),
                     value = widthValue,
                     onValueChange = onWidthChange,
-                    label = { Text("Width ($widthUnit)") },
+                    label = { Text("Width (${widthUnit.shortRep})") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
                 )
@@ -134,7 +121,7 @@ fun TileInputCard(
                         onClick = { widthUnitExpanded = true },
                         label = {
                             Text(
-                                widthUnit,
+                                widthUnit.unitName,
                                 style = MaterialTheme.typography.labelMedium
                             )
                         },
@@ -152,7 +139,7 @@ fun TileInputCard(
                     ) {
                         measurementUnits.entries.forEach { unitOption ->
                             DropdownMenuItem(
-                                text = { Text(unitOption.name) },
+                                text = { Text(unitOption.unitName) },
                                 onClick = {
                                     onWidthUnitChange(unitOption)
                                     widthUnitExpanded = false

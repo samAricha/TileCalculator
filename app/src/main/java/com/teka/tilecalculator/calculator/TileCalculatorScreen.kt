@@ -1,6 +1,9 @@
 package com.teka.tilecalculator.calculator
 
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -13,8 +16,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.House
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
 
 
@@ -22,6 +31,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun TileCalculatorScreen() {
     val scrollState = rememberScrollState()
+    val screenContext = LocalContext.current
 
     var roomLength by remember { mutableStateOf("") }
     var roomWidth by remember { mutableStateOf("") }
@@ -29,8 +39,8 @@ fun TileCalculatorScreen() {
 
     var tileLength by remember { mutableStateOf("") }
     var tileWidth by remember { mutableStateOf("") }
-    var tileLengthUnit by remember { mutableStateOf(measurementUnits.inches) }
-    var tileWidthUnit by remember { mutableStateOf(measurementUnits.inches) }
+    var tileLengthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
+    var tileWidthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
 
     var tileList: List<Tile> by remember { mutableStateOf<List<Tile>>(emptyList()) }
     var roomList by remember { mutableStateOf<List<Room>>(emptyList()) }
@@ -40,8 +50,14 @@ fun TileCalculatorScreen() {
     var result by remember { mutableStateOf<Int?>(null) }
 
     val scope = rememberCoroutineScope()
-    val tileSheetState = rememberModalBottomSheetState()
+    val tileSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
     var showTileBottomSheet by remember { mutableStateOf(false) }
+    val roomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+    var showRoomBottomSheet by remember { mutableStateOf(false) }
 
     val tilePresets = listOf(
         "Small Tile (6×6)" to Pair("6", "6"),
@@ -58,7 +74,6 @@ fun TileCalculatorScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.ime)
-                .verticalScroll(scrollState)
                 .padding(20.dp)
                 .padding(bottom = 200.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -70,18 +85,25 @@ fun TileCalculatorScreen() {
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // Room Size Section - no presets
-            SizeInputCard(
-                title = "Room Dimensions",
-                lengthValue = roomLength,
-                onLengthChange = { roomLength = it },
-                widthValue = roomWidth,
-                onWidthChange = { roomWidth = it },
-                unit = roomUnit,
-                onUnitChange = { roomUnit = it },
-                units = listOf("m", "ft", "in"),
-                presets = null
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.clickable { showRoomBottomSheet = !showRoomBottomSheet }
+                ) {
+                    Icon(Icons.Filled.House, "Create Room.")
+                    Text("Create Room")
+                }
+            }
+
+            LazyColumn {
+                items(roomList) { room ->
+                    Text(text = "Item: ${room.name}")
+                }
+            }
+
 
             Button(
                 onClick = {
@@ -178,22 +200,46 @@ fun TileCalculatorScreen() {
                     .padding(5.dp)
             ) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "New Tile",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    tileSheetState.hide()
+                                    showTileBottomSheet = false
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Filled.Close, "Close Tile Bottom Sheet.")
+                        }
+                    }
+
                     TileInputCard(
-                        title = "Tile Dimensions",
                         lengthValue = tileLength,
                         onLengthChange = { tileLength = it },
                         widthValue = tileWidth,
                         onWidthChange = { tileWidth = it },
-                        lengthUnit = tileLengthUnit.name,
-                        widthUnit = tileWidthUnit.name,
+                        lengthUnit = tileLengthUnit,
+                        widthUnit = tileWidthUnit,
                         onLengthUnitChange = { tileLengthUnit = it },
                         onWidthUnitChange = { tileWidthUnit = it },
                     )
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         OutlinedTextField(
                             value = wastagePercent,
@@ -216,13 +262,18 @@ fun TileCalculatorScreen() {
 
                     Button(
                         onClick = {
-                            if (tileLength.isEmpty() || tileWidth.isEmpty()) { return@Button }
+                            if (tileLength.isEmpty() || tileWidth.isEmpty() || wastagePercent.isEmpty() || boxSize.isEmpty()) {
+                                Toast.makeText(screenContext, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
                             scope.launch {
                                 tileList = tileList + Tile(
                                     length = tileLength.toDouble(),
                                     width = tileWidth.toDouble(),
                                     lengthUnit = tileLengthUnit,
-                                    widthUnit = tileWidthUnit
+                                    widthUnit = tileWidthUnit,
+                                    wastePercent = wastagePercent.toInt(),
+                                    boxSize = boxSize.toInt()
                                 )
                                 tileSheetState.hide()
                             }.invokeOnCompletion {
@@ -241,4 +292,93 @@ fun TileCalculatorScreen() {
 
         }
     }
+
+
+    if (showRoomBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showRoomBottomSheet = false
+            },
+            sheetState = roomSheetState
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(5.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 5.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "New Room",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    roomSheetState.hide()
+                                    showRoomBottomSheet = false
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Filled.Close, "Close Room Bottom Sheet.")
+                        }
+                    }
+
+                    // Room Size Section - no presets
+                    SizeInputCard(
+                        title = "Room Dimensions",
+                        lengthValue = roomLength,
+                        onLengthChange = { roomLength = it },
+                        widthValue = roomWidth,
+                        onWidthChange = { roomWidth = it },
+                        unit = roomUnit,
+                        onUnitChange = { roomUnit = it },
+                        units = listOf("m", "ft", "in"),
+                        presets = tileList
+                    )
+
+
+                    Button(
+                        onClick = {
+                            if (tileLength.isEmpty() || tileWidth.isEmpty() || wastagePercent.isEmpty() || boxSize.isEmpty()) {
+                                Toast.makeText(screenContext, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            scope.launch {
+                                tileList = tileList + Tile(
+                                    length = tileLength.toDouble(),
+                                    width = tileWidth.toDouble(),
+                                    lengthUnit = tileLengthUnit,
+                                    widthUnit = tileWidthUnit,
+                                    wastePercent = wastagePercent.toInt(),
+                                    boxSize = boxSize.toInt()
+                                )
+                                tileSheetState.hide()
+                            }.invokeOnCompletion {
+                                if (!tileSheetState.isVisible) {
+                                    showTileBottomSheet = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Save Room")
+                    }
+
+                }
+            }
+
+        }
+    }
+
 }

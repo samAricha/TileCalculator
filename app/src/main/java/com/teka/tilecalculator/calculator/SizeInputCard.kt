@@ -38,7 +38,7 @@ fun SizeInputCard(
     unit: String,
     onUnitChange: (String) -> Unit,
     units: List<String>,
-    presets: List<Pair<String, Pair<String, String>>>? = null,
+    presets: List<Tile>? = null,
     defaultUnitOnPreset: String? = null
 ) {
     var presetExpanded by remember { mutableStateOf(false) }
@@ -114,12 +114,12 @@ fun SizeInputCard(
                         expanded = presetExpanded,
                         onDismissRequest = { presetExpanded = false }
                     ) {
-                        presetList.forEach { (name, values) ->
+                        presetList.forEach { tile ->
                             DropdownMenuItem(
-                                text = { Text(name) },
+                                text = { Text("${ tile.length }${ tile.lengthUnit } x ${tile.width}${ tile.widthUnit }") },
                                 onClick = {
-                                    onLengthChange(values.first)
-                                    onWidthChange(values.second)
+//                                    onLengthChange(values.first)
+//                                    onWidthChange(values.second)
                                     defaultUnitOnPreset?.let { onUnitChange(it) }
                                     presetExpanded = false
                                 }
