@@ -1,7 +1,6 @@
 package com.teka.tilecalculator.calculator
 
 
-
 fun calculateTiles(
     roomLength: Double,
     roomWidth: Double,
@@ -25,11 +24,10 @@ fun calculateTiles(
 }
 
 
-fun convertToMeters(value: Double, unit: String): Double {
+fun convertToMeters(value: Double, unit: MeasurementUnits): Double {
     return when (unit) {
-        MeasurementUnits.FEET.shortRep -> value * 0.3048
-        MeasurementUnits.INCHES.shortRep -> value * 0.0254
-        MeasurementUnits.METERS.shortRep -> value
-        else -> value
+        MeasurementUnits.FEET -> value * 0.3048
+        MeasurementUnits.INCHES -> value * 0.0254
+        MeasurementUnits.METERS -> value
     }
 }

@@ -85,6 +85,7 @@ fun RoomInputCard(
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                         )
                     )
+
                     ExposedDropdownMenu(
                         expanded = presetExpanded,
                         onDismissRequest = { presetExpanded = false }

@@ -40,8 +40,8 @@ fun TileCalculatorScreen() {
     var roomName by remember { mutableStateOf("") }
     var roomLength by remember { mutableStateOf("") }
     var roomWidth by remember { mutableStateOf("") }
-    var roomLengthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
-    var roomWidthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
+    var roomLengthUnit by remember { mutableStateOf(MeasurementUnits.METERS) }
+    var roomWidthUnit by remember { mutableStateOf(MeasurementUnits.METERS) }
 
     var tileLength by remember { mutableStateOf("") }
     var tileWidth by remember { mutableStateOf("") }
@@ -91,9 +91,14 @@ fun TileCalculatorScreen() {
             )
 
 
-            LazyRow {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(1.5.dp)) {
                 items(tileList) { tile ->
-                    Text(text = "Item: ${tile.width} ${tile.widthUnit.shortRep} * ${tile.length} ${tile.lengthUnit.shortRep}")
+                    TileBox(
+                        length = tile.length,
+                        width = tile.width,
+                        lengthUnit = tile.lengthUnit,
+                        widthUnit = tile.widthUnit,
+                    )
                 }
             }
 
@@ -173,13 +178,13 @@ fun TileCalculatorScreen() {
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             val roomLengthM =
-                                convertToMeters(room.length, room.lengthUnit.shortRep)
+                                convertToMeters(room.length, room.lengthUnit)
                             val roomWidthM =
-                                convertToMeters(room.width, room.widthUnit.shortRep)
+                                convertToMeters(room.width, room.widthUnit)
                             val tileLengthM =
-                                convertToMeters(room.tile.length, room.tile.lengthUnit.shortRep)
+                                convertToMeters(room.tile.length, room.tile.lengthUnit)
                             val tileWidthM =
-                                convertToMeters(room.tile.width, room.tile.widthUnit.shortRep)
+                                convertToMeters(room.tile.width, room.tile.widthUnit)
                             val waste = room.tile.wastePercent
 
                             val tileBoxCount = calculateTiles(
