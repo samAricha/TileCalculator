@@ -1,7 +1,8 @@
 package com.teka.tilecalculator.calculator
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
@@ -18,16 +19,19 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.House
+import androidx.compose.material.icons.rounded.House
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TileCalculatorScreen() {
     val scrollState = rememberScrollState()
@@ -36,13 +40,13 @@ fun TileCalculatorScreen() {
     var roomName by remember { mutableStateOf("") }
     var roomLength by remember { mutableStateOf("") }
     var roomWidth by remember { mutableStateOf("") }
-    var roomLengthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
-    var roomWidthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
+    var roomLengthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
+    var roomWidthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
 
     var tileLength by remember { mutableStateOf("") }
     var tileWidth by remember { mutableStateOf("") }
-    var tileLengthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
-    var tileWidthUnit by remember { mutableStateOf(measurementUnits.INCHES) }
+    var tileLengthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
+    var tileWidthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
 
     var selectedTile by remember { mutableStateOf<Tile?>(null) }
     var tileList: List<Tile> by remember { mutableStateOf<List<Tile>>(initTileList) }
@@ -76,8 +80,7 @@ fun TileCalculatorScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.ime)
-                .padding(20.dp)
-                .padding(bottom = 200.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
@@ -87,18 +90,6 @@ fun TileCalculatorScreen() {
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.clickable { showRoomBottomSheet = !showRoomBottomSheet }
-                ) {
-                    Icon(Icons.Filled.House, "Create Room.")
-                    Text("Create Room")
-                }
-            }
 
             LazyRow {
                 items(tileList) { tile ->
@@ -106,93 +97,172 @@ fun TileCalculatorScreen() {
                 }
             }
 
-            LazyColumn {
-                items(roomList) { room ->
-                    val roomLengthM =
-                        convertToMeters(room.length, room.lengthUnit.shortRep)
-                    val roomWidthM =
-                        convertToMeters(room.width, room.widthUnit.shortRep)
-                    val tileLengthM =
-                        convertToMeters(tileLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.shortRep)
-                    val tileWidthM =
-                        convertToMeters(tileWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.shortRep)
-                    val waste = wastagePercent.toIntOrNull() ?: 10
-
-
-
-
-                    Text(text = "Item: ${room.name}")
-                }
-            }
-
-
-            Button(
-                onClick = {
-                    // Convert everything to meters(standard) for calculation
-                    val roomLengthM =
-                        convertToMeters(roomLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.shortRep)
-                    val roomWidthM =
-                        convertToMeters(roomWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.shortRep)
-                    val tileLengthM =
-                        convertToMeters(tileLength.toDoubleOrNull() ?: 0.0, tileLengthUnit.shortRep)
-                    val tileWidthM =
-                        convertToMeters(tileWidth.toDoubleOrNull() ?: 0.0, tileWidthUnit.shortRep)
-                    val waste = wastagePercent.toIntOrNull() ?: 10
-
-                    result = calculateTiles(
-                        roomLengthM,
-                        roomWidthM,
-                        tileLengthM,
-                        tileWidthM,
-                        waste
-                    )
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(bottom = 6.dp)
             ) {
-                Text("Calculate", style = MaterialTheme.typography.titleMedium)
-            }
-        }
+                stickyHeader {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-        result?.let { tileCount ->
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Result",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "$tileCount tiles needed",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-
-                    // room area
-                    val roomArea =
-                        (roomLength.toDoubleOrNull() ?: 0.0) * (roomWidth.toDoubleOrNull()
-                            ?: 0.0)
-                    if (roomArea > 0) {
-                        Text(
-                            text = "Room area: ${String.format("%.1f", roomArea)} sq ${measurementUnits.METERS.shortRep}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        val buttonGradient = Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary,
+                            )
                         )
+
+
+                        Button(
+                            onClick = {
+                                showRoomBottomSheet = !showRoomBottomSheet
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.White,
+                                disabledContainerColor = Color.Transparent,
+                                disabledContentColor = Color.White.copy(alpha = 0.7f)
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        brush = buttonGradient,
+                                        shape = RoundedCornerShape(16.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.House,
+                                        contentDescription = "New Room",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "New Room",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        }
 
+
+                items(roomList) { room ->
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            val roomLengthM =
+                                convertToMeters(room.length, room.lengthUnit.shortRep)
+                            val roomWidthM =
+                                convertToMeters(room.width, room.widthUnit.shortRep)
+                            val tileLengthM =
+                                convertToMeters(room.tile.length, room.tile.lengthUnit.shortRep)
+                            val tileWidthM =
+                                convertToMeters(room.tile.width, room.tile.widthUnit.shortRep)
+                            val waste = room.tile.wastePercent
+
+                            val tileBoxCount = calculateTiles(
+                                roomLengthM,
+                                roomWidthM,
+                                tileLengthM,
+                                tileWidthM,
+                                room.tile.boxSize,
+                                waste
+                            )
+
+                            val roomArea = (room.length) * (room.width)
+
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(text = room.name.replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text(
+                                    text = "Tile (${room.tile.length} ${room.tile.lengthUnit.shortRep} x ${room.tile.width} ${room.tile.widthUnit.shortRep})",
+                                    fontWeight = FontWeight.ExtraLight
+                                )
+                            }
+
+                            Text(
+                                text = "Length: ${room.length} ${room.lengthUnit.shortRep}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                    alpha = 0.8f
+                                )
+                            )
+
+                            Text(
+                                text = "Width: ${room.width}  ${room.widthUnit.shortRep}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                    alpha = 0.8f
+                                )
+                            )
+
+
+
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Boxes: ${tileBoxCount.boxCount}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                        alpha = 0.8f
+                                    ),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                Text(
+                                    text = "Area: ${String.format("%.1f", roomArea) } sq ${MeasurementUnits.METERS.shortRep}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                        alpha = 0.8f
+                                    ),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                Text(
+                                    text = "Tiles: ${tileBoxCount.tileCount}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                        alpha = 0.8f
+                                    ),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+
+
+                }
+            }
+
+        }
 
         ExtendedFloatingActionButton(
             modifier = Modifier
@@ -380,6 +450,10 @@ fun TileCalculatorScreen() {
 
                     Button(
                         onClick = {
+                            if (selectedTile == null) {
+                                selectedTile = initTileList.first()
+                            }
+
                             if (roomLength.isEmpty() || roomWidth.isEmpty() || roomName.isEmpty() || selectedTile == null ) {
                                 Toast.makeText(screenContext, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
                                 return@Button

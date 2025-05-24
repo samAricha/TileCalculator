@@ -39,10 +39,10 @@ fun RoomInputCard(
     onLengthChange: (String) -> Unit,
     widthValue: String,
     onWidthChange: (String) -> Unit,
-    lengthUnit: measurementUnits,
-    widthUnit: measurementUnits,
-    onLengthUnitChange: (measurementUnits) -> Unit,
-    onWidthUnitChange: (measurementUnits) -> Unit,
+    lengthUnit: MeasurementUnits,
+    widthUnit: MeasurementUnits,
+    onLengthUnitChange: (MeasurementUnits) -> Unit,
+    onWidthUnitChange: (MeasurementUnits) -> Unit,
 ) {
     var presetExpanded by remember { mutableStateOf(false) }
     var lengthUnitExpanded by remember { mutableStateOf(false) }
@@ -57,7 +57,6 @@ fun RoomInputCard(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Row {
                 OutlinedTextField(
                     value = roomName,
@@ -140,7 +139,7 @@ fun RoomInputCard(
                         expanded = lengthUnitExpanded,
                         onDismissRequest = { lengthUnitExpanded = false }
                     ) {
-                        measurementUnits.entries.forEach { unitOption ->
+                        MeasurementUnits.entries.forEach { unitOption ->
                             DropdownMenuItem(
                                 text = { Text(unitOption.unitName) },
                                 onClick = {
@@ -189,7 +188,7 @@ fun RoomInputCard(
                         expanded = widthUnitExpanded,
                         onDismissRequest = { widthUnitExpanded = false }
                     ) {
-                        measurementUnits.entries.forEach { unitOption ->
+                        MeasurementUnits.entries.forEach { unitOption ->
                             DropdownMenuItem(
                                 text = { Text(unitOption.unitName) },
                                 onClick = {

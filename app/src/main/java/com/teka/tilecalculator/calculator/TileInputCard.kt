@@ -15,15 +15,12 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -35,10 +32,10 @@ fun TileInputCard(
     onLengthChange: (String) -> Unit,
     widthValue: String,
     onWidthChange: (String) -> Unit,
-    lengthUnit: measurementUnits,
-    widthUnit: measurementUnits,
-    onLengthUnitChange: (measurementUnits) -> Unit,
-    onWidthUnitChange: (measurementUnits) -> Unit,
+    lengthUnit: MeasurementUnits,
+    widthUnit: MeasurementUnits,
+    onLengthUnitChange: (MeasurementUnits) -> Unit,
+    onWidthUnitChange: (MeasurementUnits) -> Unit,
 ) {
     var lengthUnitExpanded by remember { mutableStateOf(false) }
     var widthUnitExpanded by remember { mutableStateOf(false) }
@@ -88,7 +85,7 @@ fun TileInputCard(
                         expanded = lengthUnitExpanded,
                         onDismissRequest = { lengthUnitExpanded = false }
                     ) {
-                        measurementUnits.entries.forEach { unitOption ->
+                        MeasurementUnits.entries.forEach { unitOption ->
                             DropdownMenuItem(
                                 text = { Text(unitOption.unitName) },
                                 onClick = {
@@ -137,7 +134,7 @@ fun TileInputCard(
                         expanded = widthUnitExpanded,
                         onDismissRequest = { widthUnitExpanded = false }
                     ) {
-                        measurementUnits.entries.forEach { unitOption ->
+                        MeasurementUnits.entries.forEach { unitOption ->
                             DropdownMenuItem(
                                 text = { Text(unitOption.unitName) },
                                 onClick = {
