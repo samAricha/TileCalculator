@@ -1,5 +1,6 @@
 package com.teka.tilecalculator.presentation.calculator_screen.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,10 +45,10 @@ fun RoomInputCard(
     onLengthUnitChange: (MeasurementUnits) -> Unit,
     onWidthUnitChange: (MeasurementUnits) -> Unit,
 ) {
+    Log.i("RoomInputCard", "${tileList?.first()} ${tileList}")
     var presetExpanded by remember { mutableStateOf(false) }
     var lengthUnitExpanded by remember { mutableStateOf(false) }
     var widthUnitExpanded by remember { mutableStateOf(false) }
-    var selectedTile = selectedTile ?: tileList?.first()
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),

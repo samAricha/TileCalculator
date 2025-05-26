@@ -1,5 +1,6 @@
 package com.teka.tilecalculator.presentation.calculator_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teka.tilecalculator.data.repository.TileRoomsRepository
@@ -58,7 +59,10 @@ class TileCalculatorViewModel(
     private fun fetchTiles() {
         viewModelScope.launch {
             tilesRepository.getAll().collect { tiles ->
-                _uiState.value = _uiState.value.copy(tileList = tiles)
+                _uiState.value = _uiState.value.copy(
+                    tileList = tiles,
+                    selectedTile = tiles.firstOrNull()
+                )
             }
         }
     }
@@ -114,6 +118,7 @@ class TileCalculatorViewModel(
     }
 
     fun updateSelectedTile(tile: Tile?) {
+        Log.i("SelectedTile", "$tile")
         _uiState.value = _uiState.value.copy(selectedTile = tile)
     }
 
@@ -184,7 +189,9 @@ class TileCalculatorViewModel(
 
     fun addRoom(): ValidationResult {
         val currentState = _uiState.value
-        val selectedTile = currentState.selectedTile ?: initTileList.firstOrNull()
+        val selectedTile = currentState.selectedTile
+        Log.i("AddRoom", "${selectedTile}")
+
 
         if (currentState.roomLength.isEmpty() ||
             currentState.roomWidth.isEmpty() ||
