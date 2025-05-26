@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TileDao : BaseDao<Tile> {
 
+    @Query("SELECT COUNT(*) FROM tiles")
+    suspend fun getCount(): Int
+
     @Query("SELECT * FROM tiles ORDER BY name ASC")
     fun getAllTiles(): Flow<List<Tile>>
 

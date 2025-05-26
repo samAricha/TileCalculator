@@ -47,7 +47,7 @@ fun RoomInputCard(
     var presetExpanded by remember { mutableStateOf(false) }
     var lengthUnitExpanded by remember { mutableStateOf(false) }
     var widthUnitExpanded by remember { mutableStateOf(false) }
-    var selectedTile = selectedTile ?: initTileList.first()
+    var selectedTile = selectedTile ?: tileList?.first()
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -73,7 +73,7 @@ fun RoomInputCard(
                     onExpandedChange = { presetExpanded = !presetExpanded }
                 ) {
                     OutlinedTextField(
-                        value = "${selectedTile.length}${selectedTile.lengthUnit.shortRep} * ${selectedTile.width}${selectedTile.widthUnit.shortRep}",
+                        value = "${selectedTile?.length}${selectedTile?.lengthUnit?.shortRep} * ${selectedTile?.width}${selectedTile?.widthUnit?.shortRep}",
                         onValueChange = {},
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(presetExpanded) },

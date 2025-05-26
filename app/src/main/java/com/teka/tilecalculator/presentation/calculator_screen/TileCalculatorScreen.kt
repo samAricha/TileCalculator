@@ -137,8 +137,8 @@ fun TileCalculatorScreen(
                     }
                 }
 
-                items(uiState.tileRoomList) { room ->
-                    val calculationResult = viewModel.calculateTileInfo(room)
+                items(uiState.tileRoomList) { roomWithTile ->
+                    val calculationResult = viewModel.calculateTileInfo(roomWithTile)
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -152,24 +152,24 @@ fun TileCalculatorScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = room.name.replaceFirstChar { it.uppercase() },
+                                    text = roomWithTile.room.name.replaceFirstChar { it.uppercase() },
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
-                                    text = "Tile (${room.tile.length} ${room.tile.lengthUnit.shortRep} x ${room.tile.width} ${room.tile.widthUnit.shortRep})",
+                                    text = "Tile (${roomWithTile.tile.length} ${roomWithTile.tile.lengthUnit.shortRep} x ${roomWithTile.tile.width} ${roomWithTile.tile.widthUnit.shortRep})",
                                     fontWeight = FontWeight.ExtraLight
                                 )
                             }
 
                             Text(
-                                text = "Length: ${room.length} ${room.lengthUnit.shortRep}",
+                                text = "Length: ${roomWithTile.room.length} ${roomWithTile.room.lengthUnit.shortRep}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
 
                             Text(
-                                text = "Width: ${room.width} ${room.widthUnit.shortRep}",
+                                text = "Width: ${roomWithTile.room.width} ${roomWithTile.room.widthUnit.shortRep}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )

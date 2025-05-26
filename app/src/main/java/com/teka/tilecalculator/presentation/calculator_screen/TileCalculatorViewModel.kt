@@ -1,9 +1,11 @@
 package com.teka.tilecalculator.presentation.calculator_screen
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.teka.tilecalculator.data.repository.TileRoomsRepository
 import com.teka.tilecalculator.data.repository.TilesRepository
 import com.teka.tilecalculator.presentation.calculator_screen.components.MeasurementUnits
+import com.teka.tilecalculator.presentation.calculator_screen.components.RoomWithTile
 import com.teka.tilecalculator.presentation.calculator_screen.components.Tile
 import com.teka.tilecalculator.presentation.calculator_screen.components.TileRoom
 import com.teka.tilecalculator.presentation.calculator_screen.components.calculateTiles
@@ -12,6 +14,7 @@ import com.teka.tilecalculator.presentation.calculator_screen.components.initTil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class TileCalculatorUiState(
     val roomName: String = "",
@@ -26,8 +29,8 @@ data class TileCalculatorUiState(
     val tileWidthUnit: MeasurementUnits = MeasurementUnits.INCHES,
 
     val selectedTile: Tile? = null,
-    val tileList: List<Tile> = initTileList,
-    val tileRoomList: List<TileRoom> = emptyList(),
+    val tileList: List<Tile> = emptyList<Tile>(),
+    val tileRoomList: List<RoomWithTile> = emptyList(),
     val wastagePercent: String = "10",
     val boxSize: String = "",
 
@@ -42,6 +45,35 @@ class TileCalculatorViewModel(
 
     private val _uiState = MutableStateFlow(TileCalculatorUiState())
     val uiState: StateFlow<TileCalculatorUiState> = _uiState.asStateFlow()
+
+
+    init {
+        viewModelScope.launch {
+            tilesRepository.initializeIfNeeded()
+        }
+        fetchTiles()
+        fetchRoomsWithTiles()
+    }
+
+    private fun fetchTiles() {
+        viewModelScope.launch {
+            tilesRepository.getAll().collect { tiles ->
+                _uiState.value = _uiState.value.copy(tileList = tiles)
+            }
+        }
+    }
+
+    private fun fetchRoomsWithTiles() {
+        viewModelScope.launch {
+            tileRoomsRepository.getAllRoomsWithTilesStream().collect { tileRooms ->
+                _uiState.value = _uiState.value.copy(tileRoomList = tileRooms)
+            }
+        }
+    }
+
+
+
+
 
     // Room-related methods
     fun updateRoomName(name: String) {
@@ -110,7 +142,8 @@ class TileCalculatorViewModel(
         _uiState.value = _uiState.value.copy(showRoomBottomSheet = false)
     }
 
-    // Business logic methods
+
+
     fun addTile(): ValidationResult {
         val currentState = _uiState.value
 
@@ -131,9 +164,12 @@ class TileCalculatorViewModel(
                 boxSize = currentState.boxSize.toInt()
             )
 
+            viewModelScope.launch {
+                tilesRepository.insert(newTile)
+            }
+
+            // Only clear the form fields - Room will automatically update tileList via fetchTiles()
             _uiState.value = currentState.copy(
-                tileList = currentState.tileList + newTile,
-                // Clear form after successful addition
                 tileLength = "",
                 tileWidth = "",
                 wastagePercent = "10",
@@ -164,12 +200,14 @@ class TileCalculatorViewModel(
                 width = currentState.roomWidth.toDouble(),
                 lengthUnit = currentState.roomLengthUnit,
                 widthUnit = currentState.roomWidthUnit,
-                tile = selectedTile
+                tileId = selectedTile.id
             )
 
+            viewModelScope.launch {
+                tileRoomsRepository.insert(newRoom)
+            }
+
             _uiState.value = currentState.copy(
-                tileRoomList = currentState.tileRoomList + newRoom,
-                // Clear form after successful addition
                 roomName = "",
                 roomLength = "",
                 roomWidth = "",
@@ -182,23 +220,23 @@ class TileCalculatorViewModel(
         }
     }
 
-    fun calculateTileInfo(room: TileRoom): TileCalculationResult {
-        val roomLengthM = convertToMeters(room.length, room.lengthUnit)
-        val roomWidthM = convertToMeters(room.width, room.widthUnit)
-        val tileLengthM = convertToMeters(room.tile.length, room.tile.lengthUnit)
-        val tileWidthM = convertToMeters(room.tile.width, room.tile.widthUnit)
-        val waste = room.tile.wastePercent
+    fun calculateTileInfo(roomWithTile: RoomWithTile): TileCalculationResult {
+        val roomLengthM = convertToMeters(roomWithTile.room.length, roomWithTile.room.lengthUnit)
+        val roomWidthM = convertToMeters(roomWithTile.room.width, roomWithTile.room.widthUnit)
+        val tileLengthM = convertToMeters(roomWithTile.tile.length, roomWithTile.tile.lengthUnit)
+        val tileWidthM = convertToMeters(roomWithTile.tile.width, roomWithTile.tile.widthUnit)
+        val waste = roomWithTile.tile.wastePercent
 
         val tileBoxCount = calculateTiles(
             roomLengthM,
             roomWidthM,
             tileLengthM,
             tileWidthM,
-            room.tile.boxSize,
+            roomWithTile.tile.boxSize,
             waste
         )
 
-        val roomArea = room.length * room.width
+        val roomArea = roomWithTile.room.length * roomWithTile.room.width
 
         return TileCalculationResult(
             boxCount = tileBoxCount.boxCount,
