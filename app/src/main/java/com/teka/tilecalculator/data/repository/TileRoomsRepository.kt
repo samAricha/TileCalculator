@@ -1,7 +1,7 @@
 package com.teka.tilecalculator.data.repository
 
-import com.teka.tilecalculator.calculator.RoomWithTile
-import com.teka.tilecalculator.calculator.TileRoom
+import com.teka.tilecalculator.presentation.calculator_screen.components.RoomWithTile
+import com.teka.tilecalculator.presentation.calculator_screen.components.TileRoom
 import com.teka.tilecalculator.data.dao.TileRoomDao
 import kotlinx.coroutines.flow.Flow
 

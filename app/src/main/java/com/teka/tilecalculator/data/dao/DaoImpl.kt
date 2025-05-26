@@ -3,10 +3,9 @@ package com.teka.tilecalculator.data.dao
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
-import com.teka.tilecalculator.calculator.MeasurementUnits
-import com.teka.tilecalculator.calculator.RoomWithTile
-import com.teka.tilecalculator.calculator.Tile
-import com.teka.tilecalculator.calculator.TileRoom
+import com.teka.tilecalculator.presentation.calculator_screen.components.RoomWithTile
+import com.teka.tilecalculator.presentation.calculator_screen.components.Tile
+import com.teka.tilecalculator.presentation.calculator_screen.components.TileRoom
 import kotlinx.coroutines.flow.Flow
 
 @Dao

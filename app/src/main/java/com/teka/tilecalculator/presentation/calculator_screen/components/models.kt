@@ -1,4 +1,4 @@
-package com.teka.tilecalculator.calculator
+package com.teka.tilecalculator.presentation.calculator_screen.components
 
 import androidx.room.ColumnInfo
 import androidx.room.Embedded

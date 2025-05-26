@@ -1,5 +1,6 @@
-package com.teka.tilecalculator.calculator
+package com.teka.tilecalculator.presentation.calculator_screen.components
 
+import kotlin.math.ceil
 
 
 fun calculateTiles(
@@ -18,8 +19,8 @@ fun calculateTiles(
     val baseTiles = (roomArea / tileArea).toInt()
     val withWastage = baseTiles * (1 + wastagePercent / 100.0)
 
-    val tileCount = kotlin.math.ceil(withWastage).toInt()
-    val boxCount = kotlin.math.ceil((tileCount/tilesInBox).toDouble()).toInt()
+    val tileCount = ceil(withWastage).toInt()
+    val boxCount = ceil((tileCount/tilesInBox).toDouble()).toInt()
 
     return TileBoxCounts(tileCount, boxCount)
 }

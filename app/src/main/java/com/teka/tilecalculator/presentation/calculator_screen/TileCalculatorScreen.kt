@@ -1,4 +1,4 @@
-package com.teka.tilecalculator.calculator
+package com.teka.tilecalculator.presentation.calculator_screen
 
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -28,12 +28,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.teka.tilecalculator.core.AppViewModelProvider
+import com.teka.tilecalculator.presentation.calculator_screen.components.MeasurementUnits
+import com.teka.tilecalculator.presentation.calculator_screen.components.RoomInputCard
+import com.teka.tilecalculator.presentation.calculator_screen.components.TileBox
+import com.teka.tilecalculator.presentation.calculator_screen.components.TileInputCard
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TileCalculatorScreen(
-    viewModel: TileCalculatorViewModel = viewModel()
+    viewModel: TileCalculatorViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val screenContext = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()

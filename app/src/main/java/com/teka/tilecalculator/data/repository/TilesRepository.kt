@@ -1,6 +1,6 @@
 package com.teka.tilecalculator.data.repository
 
-import com.teka.tilecalculator.calculator.Tile
+import com.teka.tilecalculator.presentation.calculator_screen.components.Tile
 import com.teka.tilecalculator.data.dao.TileDao
 import kotlinx.coroutines.flow.Flow
 

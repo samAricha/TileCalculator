@@ -1,8 +1,8 @@
 package com.teka.tilecalculator.core
 
 import android.app.Application
-import com.teka.tilecalculator.data.AppContainer
-import com.teka.tilecalculator.data.AppDataContainer
+import com.teka.tilecalculator.di.AppContainer
+import com.teka.tilecalculator.di.AppDataContainer
 
 class TileApplication : Application() {
 

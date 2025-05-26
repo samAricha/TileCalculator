@@ -1,6 +1,14 @@
-package com.teka.tilecalculator.calculator
+package com.teka.tilecalculator.presentation.calculator_screen
 
 import androidx.lifecycle.ViewModel
+import com.teka.tilecalculator.data.repository.TileRoomsRepository
+import com.teka.tilecalculator.data.repository.TilesRepository
+import com.teka.tilecalculator.presentation.calculator_screen.components.MeasurementUnits
+import com.teka.tilecalculator.presentation.calculator_screen.components.Tile
+import com.teka.tilecalculator.presentation.calculator_screen.components.TileRoom
+import com.teka.tilecalculator.presentation.calculator_screen.components.calculateTiles
+import com.teka.tilecalculator.presentation.calculator_screen.components.convertToMeters
+import com.teka.tilecalculator.presentation.calculator_screen.components.initTileList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +35,10 @@ data class TileCalculatorUiState(
     val showRoomBottomSheet: Boolean = false
 )
 
-class TileCalculatorViewModel : ViewModel() {
+class TileCalculatorViewModel(
+    private val tilesRepository: TilesRepository,
+    private val tileRoomsRepository: TileRoomsRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TileCalculatorUiState())
     val uiState: StateFlow<TileCalculatorUiState> = _uiState.asStateFlow()

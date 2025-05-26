@@ -4,14 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.teka.tilecalculator.calculator.Tile
-import com.teka.tilecalculator.calculator.TileRoom
+import com.teka.tilecalculator.presentation.calculator_screen.components.Tile
+import com.teka.tilecalculator.presentation.calculator_screen.components.TileRoom
 import com.teka.tilecalculator.data.dao.TileDao
 import com.teka.tilecalculator.data.dao.TileRoomDao
 
-/**
- * Database class with a singleton Instance object.
- */
+
 @Database(entities = [Tile::class, TileRoom::class], version = 1, exportSchema = false)
 abstract class TileCalculatorDatabase : RoomDatabase() {
 
@@ -25,13 +23,8 @@ abstract class TileCalculatorDatabase : RoomDatabase() {
         fun getDatabase(context: Context): TileCalculatorDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, TileCalculatorDatabase::class.java, "item_database")
-                    /**
-                     * Setting this option in your app's database builder means that Room
-                     * permanently deletes all data from the tables in your database when it
-                     * attempts to perform a migration with no defined migration path.
-                     */
-                    .fallbackToDestructiveMigration()
+                Room.databaseBuilder(context, TileCalculatorDatabase::class.java, "tile_calculator_database")
+                    .fallbackToDestructiveMigration(false)
                     .build()
                     .also { Instance = it }
             }

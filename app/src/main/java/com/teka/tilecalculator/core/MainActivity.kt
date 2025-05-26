@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.teka.tilecalculator.calculator.TileCalculatorScreen
+import com.teka.tilecalculator.presentation.calculator_screen.TileCalculatorScreen
 import com.teka.tilecalculator.ui.theme.TileCalculatorTheme
 
 class MainActivity : ComponentActivity() {
