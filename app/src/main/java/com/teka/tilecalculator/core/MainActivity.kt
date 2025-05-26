@@ -1,4 +1,4 @@
-package com.teka.tilecalculator
+package com.teka.tilecalculator.core
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TileCalculatorTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.Companion.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     TileCalculatorScreen()

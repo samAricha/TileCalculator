@@ -1,5 +1,12 @@
 package com.teka.tilecalculator.calculator
 
+import androidx.room.ColumnInfo
+import androidx.room.Embedded
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+import androidx.room.Relation
+
 enum class MeasurementUnits(
     val unitName: String,
     val shortRep: String
@@ -9,23 +16,91 @@ enum class MeasurementUnits(
     METERS("Meters", "m")
 }
 
+@Entity(tableName = "tiles")
 data class Tile(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+
+    @ColumnInfo(name = "name")
+    val name: String = "",
+
+    @ColumnInfo(name = "length")
     val length: Double,
+
+    @ColumnInfo(name = "width")
     val width: Double,
+
+    @ColumnInfo(name = "length_unit")
     val lengthUnit: MeasurementUnits,
+
+    @ColumnInfo(name = "width_unit")
     val widthUnit: MeasurementUnits,
+
+    @ColumnInfo(name = "waste_percent")
     val wastePercent: Int,
-    val boxSize: Int
+
+    @ColumnInfo(name = "box_size")
+    val boxSize: Int,
+
+    @ColumnInfo(name = "price_per_box")
+    val pricePerBox: Double = 0.0,
+
+    @ColumnInfo(name = "created_at")
+    val createdAt: Long = System.currentTimeMillis()
 )
 
-data class Room(
-    val name: String,
-    val tile: Tile,
-    val length: Double,
-    val width: Double,
-    val lengthUnit: MeasurementUnits,
-    val widthUnit: MeasurementUnits
+
+@Entity(
+    tableName = "rooms",
+    foreignKeys = [
+        ForeignKey(
+            entity = Tile::class,
+            parentColumns = ["id"],
+            childColumns = ["tile_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
 )
+data class TileRoom(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+
+    @ColumnInfo(name = "name")
+    val name: String,
+
+    @ColumnInfo(name = "tile_id")
+    val tileId: Int,
+
+    @ColumnInfo(name = "length")
+    val length: Double,
+
+    @ColumnInfo(name = "width")
+    val width: Double,
+
+    @ColumnInfo(name = "length_unit")
+    val lengthUnit: MeasurementUnits,
+
+    @ColumnInfo(name = "width_unit")
+    val widthUnit: MeasurementUnits,
+
+    @ColumnInfo(name = "created_at")
+    val createdAt: Long = System.currentTimeMillis(),
+
+    @ColumnInfo(name = "is_calculated")
+    val isCalculated: Boolean = false
+)
+
+
+data class RoomWithTile(
+    @Embedded val room: TileRoom,
+    @Relation(
+        parentColumn = "tile_id",
+        entityColumn = "id"
+    )
+    val tile: Tile
+)
+
+
 
 data class TileBoxCounts(
     val tileCount: Int,

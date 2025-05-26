@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,52 +27,24 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun TileCalculatorScreen() {
-    val scrollState = rememberScrollState()
+fun TileCalculatorScreen(
+    viewModel: TileCalculatorViewModel = viewModel()
+) {
     val screenContext = LocalContext.current
-
-    var roomName by remember { mutableStateOf("") }
-    var roomLength by remember { mutableStateOf("") }
-    var roomWidth by remember { mutableStateOf("") }
-    var roomLengthUnit by remember { mutableStateOf(MeasurementUnits.METERS) }
-    var roomWidthUnit by remember { mutableStateOf(MeasurementUnits.METERS) }
-
-    var tileLength by remember { mutableStateOf("") }
-    var tileWidth by remember { mutableStateOf("") }
-    var tileLengthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
-    var tileWidthUnit by remember { mutableStateOf(MeasurementUnits.INCHES) }
-
-    var selectedTile by remember { mutableStateOf<Tile?>(null) }
-    var tileList: List<Tile> by remember { mutableStateOf<List<Tile>>(initTileList) }
-    var roomList by remember { mutableStateOf<List<Room>>(emptyList()) }
-    var wastagePercent by remember { mutableStateOf("10") }
-    var boxSize by remember { mutableStateOf("") }
-    var result by remember { mutableStateOf<Int?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
 
     val scope = rememberCoroutineScope()
     val tileSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
-    var showTileBottomSheet by remember { mutableStateOf(false) }
     val roomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
-    var showRoomBottomSheet by remember { mutableStateOf(false) }
-
-    val tilePresets = listOf(
-        "Small Tile (6×6)" to Pair("6", "6"),
-        "Standard Tile (12×12)" to Pair("12", "12"),
-        "Large Tile (18×18)" to Pair("18", "18"),
-        "Plank Tile (6×36)" to Pair("6", "36"),
-        "Large Format (24×24)" to Pair("24", "24")
-    )
-
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -90,9 +61,8 @@ fun TileCalculatorScreen() {
                 color = MaterialTheme.colorScheme.primary
             )
 
-
             LazyRow(horizontalArrangement = Arrangement.spacedBy(1.5.dp)) {
-                items(tileList) { tile ->
+                items(uiState.tileList) { tile ->
                     TileBox(
                         length = tile.length,
                         width = tile.width,
@@ -112,7 +82,6 @@ fun TileCalculatorScreen() {
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         val buttonGradient = Brush.horizontalGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary,
@@ -120,11 +89,8 @@ fun TileCalculatorScreen() {
                             )
                         )
 
-
                         Button(
-                            onClick = {
-                                showRoomBottomSheet = !showRoomBottomSheet
-                            },
+                            onClick = { viewModel.showRoomBottomSheet() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -166,8 +132,8 @@ fun TileCalculatorScreen() {
                     }
                 }
 
-
-                items(roomList) { room ->
+                items(uiState.tileRoomList) { room ->
+                    val calculationResult = viewModel.calculateTileInfo(room)
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -177,32 +143,13 @@ fun TileCalculatorScreen() {
                             modifier = Modifier.padding(24.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            val roomLengthM =
-                                convertToMeters(room.length, room.lengthUnit)
-                            val roomWidthM =
-                                convertToMeters(room.width, room.widthUnit)
-                            val tileLengthM =
-                                convertToMeters(room.tile.length, room.tile.lengthUnit)
-                            val tileWidthM =
-                                convertToMeters(room.tile.width, room.tile.widthUnit)
-                            val waste = room.tile.wastePercent
-
-                            val tileBoxCount = calculateTiles(
-                                roomLengthM,
-                                roomWidthM,
-                                tileLengthM,
-                                tileWidthM,
-                                room.tile.boxSize,
-                                waste
-                            )
-
-                            val roomArea = (room.length) * (room.width)
-
-
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(text = room.name.replaceFirstChar { it.uppercase() }, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = room.name.replaceFirstChar { it.uppercase() },
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
                                     text = "Tile (${room.tile.length} ${room.tile.lengthUnit.shortRep} x ${room.tile.width} ${room.tile.widthUnit.shortRep})",
@@ -213,281 +160,262 @@ fun TileCalculatorScreen() {
                             Text(
                                 text = "Length: ${room.length} ${room.lengthUnit.shortRep}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                    alpha = 0.8f
-                                )
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
 
                             Text(
-                                text = "Width: ${room.width}  ${room.widthUnit.shortRep}",
+                                text = "Width: ${room.width} ${room.widthUnit.shortRep}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                    alpha = 0.8f
-                                )
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
-
-
-
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Boxes: ${tileBoxCount.boxCount}",
+                                    text = "Boxes: ${calculationResult.boxCount}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                        alpha = 0.8f
-                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                                     fontWeight = FontWeight.SemiBold
                                 )
 
                                 Text(
-                                    text = "Area: ${String.format("%.1f", roomArea) } sq ${MeasurementUnits.METERS.shortRep}",
+                                    text = "Area: ${String.format("%.1f", calculationResult.roomArea)} sq ${MeasurementUnits.METERS.shortRep}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                        alpha = 0.8f
-                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                                     fontWeight = FontWeight.SemiBold
                                 )
 
                                 Text(
-                                    text = "Tiles: ${tileBoxCount.tileCount}",
+                                    text = "Tiles: ${calculationResult.tileCount}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                        alpha = 0.8f
-                                    ),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
                     }
-
-
                 }
             }
-
         }
 
         ExtendedFloatingActionButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
-            onClick = {
-                showTileBottomSheet = !showTileBottomSheet
-            },
+            onClick = { viewModel.showTileBottomSheet() },
             icon = { Icon(Icons.Filled.Edit, "Introduce new tile.") },
             text = { Text(text = "New Tile") },
         )
     }
 
-
-    if (showTileBottomSheet) {
+    // Tile Bottom Sheet
+    if (uiState.showTileBottomSheet) {
         ModalBottomSheet(
-            onDismissRequest = {
-                showTileBottomSheet = false
-            },
+            onDismissRequest = { viewModel.hideTileBottomSheet() },
             sheetState = tileSheetState
         ) {
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(5.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 5.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "New Tile",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    tileSheetState.hide()
-                                    showTileBottomSheet = false
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Filled.Close, "Close Tile Bottom Sheet.")
-                        }
-                    }
-
-                    TileInputCard(
-                        lengthValue = tileLength,
-                        onLengthChange = { tileLength = it },
-                        widthValue = tileWidth,
-                        onWidthChange = { tileWidth = it },
-                        lengthUnit = tileLengthUnit,
-                        widthUnit = tileWidthUnit,
-                        onLengthUnitChange = { tileLengthUnit = it },
-                        onWidthUnitChange = { tileWidthUnit = it },
-                    )
-
-                    Row(
-                        modifier = Modifier.padding(horizontal = 5.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        OutlinedTextField(
-                            value = wastagePercent,
-                            onValueChange = { wastagePercent = it },
-                            label = { Text("Waste (%)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = boxSize,
-                            onValueChange = { boxSize = it },
-                            label = { Text("Box Size") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                    }
-
-
-                    Button(
-                        onClick = {
-                            if (tileLength.isEmpty() || tileWidth.isEmpty() || wastagePercent.isEmpty() || boxSize.isEmpty()) {
-                                Toast.makeText(screenContext, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
+            TileBottomSheetContent(
+                uiState = uiState,
+                viewModel = viewModel,
+                onSave = {
+                    val result = viewModel.addTile()
+                    when (result) {
+                        is ValidationResult.Success -> {
                             scope.launch {
-                                tileList = tileList + Tile(
-                                    length = tileLength.toDouble(),
-                                    width = tileWidth.toDouble(),
-                                    lengthUnit = tileLengthUnit,
-                                    widthUnit = tileWidthUnit,
-                                    wastePercent = wastagePercent.toInt(),
-                                    boxSize = boxSize.toInt()
-                                )
                                 tileSheetState.hide()
                             }.invokeOnCompletion {
                                 if (!tileSheetState.isVisible) {
-                                    showTileBottomSheet = false
+                                    viewModel.hideTileBottomSheet()
                                 }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Save Tile")
+                        }
+                        is ValidationResult.Error -> {
+                            Toast.makeText(screenContext, result.message, Toast.LENGTH_SHORT).show()
+                        }
                     }
-
+                },
+                onClose = {
+                    scope.launch {
+                        tileSheetState.hide()
+                        viewModel.hideTileBottomSheet()
+                    }
                 }
-            }
-
+            )
         }
     }
 
-
-    if (showRoomBottomSheet) {
+    // Room Bottom Sheet
+    if (uiState.showRoomBottomSheet) {
         ModalBottomSheet(
-            onDismissRequest = {
-                showRoomBottomSheet = false
-            },
+            onDismissRequest = { viewModel.hideRoomBottomSheet() },
             sheetState = roomSheetState
         ) {
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(5.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 5.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "New Room",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    roomSheetState.hide()
-                                    showRoomBottomSheet = false
-                                }
-                            }
-                        ) {
-                            Icon(Icons.Filled.Close, "Close Room Bottom Sheet.")
-                        }
-                    }
-
-                    // Room Size Section - no presets
-                    RoomInputCard(
-                        roomName = roomName,
-                        selectedTile = selectedTile,
-                        onTileChange = { selectedTile = it },
-                        onRoomNameChange = { roomName = it },
-                        lengthValue = roomLength,
-                        onLengthChange = { roomLength = it },
-                        widthValue = roomWidth,
-                        onWidthChange = { roomWidth = it },
-                        tileList = tileList,
-                        lengthUnit = roomLengthUnit,
-                        widthUnit = roomWidthUnit,
-                        onLengthUnitChange = { roomLengthUnit = it },
-                        onWidthUnitChange = { roomWidthUnit = it },
-
-                    )
-
-
-                    Button(
-                        onClick = {
-                            if (selectedTile == null) {
-                                selectedTile = initTileList.first()
-                            }
-
-                            if (roomLength.isEmpty() || roomWidth.isEmpty() || roomName.isEmpty() || selectedTile == null ) {
-                                Toast.makeText(screenContext, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
-                                return@Button
-                            }
+            RoomBottomSheetContent(
+                uiState = uiState,
+                viewModel = viewModel,
+                onSave = {
+                    val result = viewModel.addRoom()
+                    when (result) {
+                        is ValidationResult.Success -> {
                             scope.launch {
-                                roomList = roomList + Room(
-                                    name = roomName,
-                                    length = roomLength.toDouble(),
-                                    width = roomWidth.toDouble(),
-                                    lengthUnit = roomLengthUnit,
-                                    widthUnit = roomWidthUnit,
-                                    tile = selectedTile!!
-                                )
                                 roomSheetState.hide()
                             }.invokeOnCompletion {
                                 if (!roomSheetState.isVisible) {
-                                    showRoomBottomSheet = false
+                                    viewModel.hideRoomBottomSheet()
                                 }
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Save Room")
+                        }
+                        is ValidationResult.Error -> {
+                            Toast.makeText(screenContext, result.message, Toast.LENGTH_SHORT).show()
+                        }
                     }
+                },
+                onClose = {
+                    scope.launch {
+                        roomSheetState.hide()
+                        viewModel.hideRoomBottomSheet()
+                    }
+                }
+            )
+        }
+    }
+}
 
+@Composable
+private fun TileBottomSheetContent(
+    uiState: TileCalculatorUiState,
+    viewModel: TileCalculatorViewModel,
+    onSave: () -> Unit,
+    onClose: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(5.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "New Tile",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Filled.Close, "Close Tile Bottom Sheet.")
                 }
             }
 
+            TileInputCard(
+                lengthValue = uiState.tileLength,
+                onLengthChange = viewModel::updateTileLength,
+                widthValue = uiState.tileWidth,
+                onWidthChange = viewModel::updateTileWidth,
+                lengthUnit = uiState.tileLengthUnit,
+                widthUnit = uiState.tileWidthUnit,
+                onLengthUnitChange = viewModel::updateTileLengthUnit,
+                onWidthUnitChange = viewModel::updateTileWidthUnit,
+            )
+
+            Row(
+                modifier = Modifier.padding(horizontal = 5.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                OutlinedTextField(
+                    value = uiState.wastagePercent,
+                    onValueChange = viewModel::updateWastagePercent,
+                    label = { Text("Waste (%)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = uiState.boxSize,
+                    onValueChange = viewModel::updateBoxSize,
+                    label = { Text("Box Size") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+            }
+
+            Button(
+                onClick = onSave,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Save Tile")
+            }
         }
     }
+}
 
+@Composable
+private fun RoomBottomSheetContent(
+    uiState: TileCalculatorUiState,
+    viewModel: TileCalculatorViewModel,
+    onSave: () -> Unit,
+    onClose: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(5.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "New Room",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Filled.Close, "Close Room Bottom Sheet.")
+                }
+            }
+
+            RoomInputCard(
+                roomName = uiState.roomName,
+                selectedTile = uiState.selectedTile,
+                onTileChange = viewModel::updateSelectedTile,
+                onRoomNameChange = viewModel::updateRoomName,
+                lengthValue = uiState.roomLength,
+                onLengthChange = viewModel::updateRoomLength,
+                widthValue = uiState.roomWidth,
+                onWidthChange = viewModel::updateRoomWidth,
+                tileList = uiState.tileList,
+                lengthUnit = uiState.roomLengthUnit,
+                widthUnit = uiState.roomWidthUnit,
+                onLengthUnitChange = viewModel::updateRoomLengthUnit,
+                onWidthUnitChange = viewModel::updateRoomWidthUnit,
+            )
+
+            Button(
+                onClick = onSave,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Save Room")
+            }
+        }
+    }
 }
