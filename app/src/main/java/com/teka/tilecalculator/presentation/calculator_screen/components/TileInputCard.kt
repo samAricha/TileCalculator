@@ -1,4 +1,4 @@
-package com.teka.tilecalculator.calculator
+package com.teka.tilecalculator.presentation.calculator_screen.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +15,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,16 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlin.String
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoomInputCard(
-    tileList: List<Tile>? = null,
-    selectedTile: Tile? = null,
-    onTileChange: (Tile) -> Unit,
-    roomName: String,
-    onRoomNameChange: (String) -> Unit,
+fun TileInputCard(
     lengthValue: String,
     onLengthChange: (String) -> Unit,
     widthValue: String,
@@ -44,10 +37,8 @@ fun RoomInputCard(
     onLengthUnitChange: (MeasurementUnits) -> Unit,
     onWidthUnitChange: (MeasurementUnits) -> Unit,
 ) {
-    var presetExpanded by remember { mutableStateOf(false) }
     var lengthUnitExpanded by remember { mutableStateOf(false) }
     var widthUnitExpanded by remember { mutableStateOf(false) }
-    var selectedTile = selectedTile ?: initTileList.first()
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -57,52 +48,6 @@ fun RoomInputCard(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row {
-                OutlinedTextField(
-                    value = roomName,
-                    onValueChange = onRoomNameChange,
-                    label = { Text("Name") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-            }
-
-            tileList?.let { presetList ->
-                ExposedDropdownMenuBox(
-                    expanded = presetExpanded,
-                    onExpandedChange = { presetExpanded = !presetExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = "${selectedTile.length}${selectedTile.lengthUnit.shortRep} * ${selectedTile.width}${selectedTile.widthUnit.shortRep}",
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(presetExpanded) },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = presetExpanded,
-                        onDismissRequest = { presetExpanded = false }
-                    ) {
-                        presetList.forEach { tile ->
-                            DropdownMenuItem(
-                                text = { Text("${ tile.length }${ tile.lengthUnit.shortRep } x ${tile.width}${ tile.widthUnit.shortRep }") },
-                                onClick = {
-                                    onTileChange(tile)
-                                    presetExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -202,7 +147,6 @@ fun RoomInputCard(
                 }
 
             }
-
         }
     }
 }
